@@ -111,10 +111,59 @@ class M3C3Problem(SearchProblem):
             return 'There are %d M & %d C on the right bank'%(3-state[0], 3-state[1])
 
 
+class OilProblem(SearchProblem):
+    capacity = (10, 3, 7)
+    conainers = 'ABC'
+    # oil = np.array([10, 0, 0])
 
-problem = M3C3Problem(initial_state=(3,3,0))
 
-result = astar(problem)
+    def actions(self, state):
+        acts = []
+        for a in range(3):
+            if state[a] > 0:
+                for b in range(3):
+                    if a!=b and state[b] < OilProblem.capacity[b]:
+                        acts.append((a, b))
+        return acts
 
-for a, s in result.path():
-    print(problem.action_representation(a), '#', problem.state_representation(s))
+
+    def result(self, state, action):
+        state = np.array(state)
+        a, b = action
+        orig = state[b]
+        diff =  OilProblem.capacity[b] - orig
+        a_oil = state[a]
+        if diff < a_oil:
+            state[b] = OilProblem.capacity[b]
+            state[a] -= diff
+        else:
+            state[b] += state[a]
+            state[a] = 0
+
+        return tuple(state)
+
+    def is_goal(self, state):
+        return np.any(np.array(state)==5)
+
+    def action_representation(self, action):
+        """
+        Returns a string representation of an action.
+        By default it returns str(action).
+        """
+        if action is None:
+            return 'Start'
+        return 'Pour the oil in %s ot %s.'%(OilProblem.conainers[action[0]], OilProblem.conainers[action[1]])
+
+    def state_representation(self, state):
+        return 'There are %dkg in A(10kg), %dkg in B(3kg), %dkg in C(7kg)'%(state[0], state[1], state[2])
+
+if __name__ == '__main__':
+    # problem = M3C3Problem(initial_state=(3,3,0))
+
+    problem = OilProblem(initial_state=(10, 0, 0))
+
+    result = astar(problem)
+
+    for a, s in result.path():
+        print(problem.action_representation(a), '#', problem.state_representation(s))
+
